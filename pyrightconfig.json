@@ -1,0 +1,6 @@
+{
+  "include": ["*.py"],
+  "exclude": ["build", ".audit-dist"],
+  "executionEnvironments": [{"root": ".", "extraPaths": ["."]}],
+  "typeCheckingMode": "basic"
+}

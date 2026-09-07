@@ -1,2 +1,2 @@
-# send2trash es OPCIONAL: habilita el borrado seguro a la papelera de Windows.
-send2trash>=1.8
+# Spongia has no mandatory runtime dependencies.
+# Optional trash support: python -m pip install ".[trash]"

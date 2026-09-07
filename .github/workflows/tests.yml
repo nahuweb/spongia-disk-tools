@@ -1,6 +1,7 @@
+---
 name: Tests
 
-on:
+"on":
   push:
     branches: [main]
   pull_request:
@@ -26,8 +27,20 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install package
-        run: python -m pip install .
+      - name: Install package and development tools
+        run: python -m pip install ".[dev]"
+
+      - name: Check formatting
+        run: ruff format --check .
+
+      - name: Run lint
+        run: ruff check .
+
+      - name: Check dependencies
+        run: python -m pip check
+
+      - name: Build distributions
+        run: python -m build --sdist --wheel
 
       - name: Compile sources
         run: python -m py_compile spongia.py spongia_translations.py

@@ -69,7 +69,7 @@ spongia remove file.txt --permanent
 spongia remove file.txt --force
 ```
 
-> ⚠️ **Safety:** confirmation is required unless `--force` is used. The user profile, the Windows directory, and their descendants are protected. Install `send2trash` to enable safe trash operations.
+> ⚠️ **Safety:** confirmation is required unless `--force` is used. The user-profile root cannot be deleted, and the Windows directory plus its descendants are protected; files inside the user profile remain removable. Install `send2trash` to enable safe trash operations.
 
 ## Installation
 
@@ -139,11 +139,15 @@ python -m unittest discover -s . -p "test_*.py" -v
 ## Project files
 
 ```text
-spongia.py          # CLI and application logic
-spongia_translations.py     # English, Spanish, and Portuguese messages
+spongia.py          # CLI and menu entry point
+spongia_common.py   # Shared parsing, colors, and terminal helpers
+spongia_scan.py     # File and directory scanners
+spongia_remove.py   # Safe removal and trash handling
+spongia_translations.py # English, Spanish, and Portuguese messages
 test_spongia.py     # Unit tests
-pyproject.toml      # Package configuration
-requirements.txt    # Optional dependency list
+pyproject.toml      # Package, lint, and build configuration
+pyrightconfig.json  # Static type-checking scope
+requirements.txt    # Runtime dependency note
 CHANGELOG.md        # Release history
 LICENSE             # MIT license
 ```

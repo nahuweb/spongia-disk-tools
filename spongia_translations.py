@@ -46,9 +46,9 @@ MESSAGES = {
         "pt": "Diretório [.]: ",
     },
     "menu_min_size": {
-        "es": "Tamaño mínimo [10MB]: ",
-        "en": "Minimum size [10MB]: ",
-        "pt": "Tamanho mínimo [10MB]: ",
+        "es": "Tamaño mínimo [10MB; sin unidad = MB]: ",
+        "en": "Minimum size [10MB; no unit = MB]: ",
+        "pt": "Tamanho mínimo [10MB; sem unidade = MB]: ",
     },
     "menu_top": {
         "es": "Cantidad de resultados [20]: ",
@@ -151,9 +151,9 @@ MESSAGES = {
         "pt": "❌ Diretório não existe: {dir}",
     },
     "scan_progress": {
-        "es": "🔄 Revisados: {files} archivos | Carpeta: {dir}",
-        "en": "🔄 Checked: {files} files | Directory: {dir}",
-        "pt": "🔄 Verificados: {files} arquivos | Pasta: {dir}",
+        "es": "🔄 Revisados: {files} archivos",
+        "en": "🔄 Checked: {files} files",
+        "pt": "🔄 Verificados: {files} arquivos",
     },
     "scan_complete": {
         "es": "✅ Escaneo terminado: {files} archivos revisados.",

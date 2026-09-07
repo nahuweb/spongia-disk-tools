@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import spongia
+from spongia_common import parse_menu_size  # pyright: ignore[reportMissingImports]
 
 
 class SpongiaTests(unittest.TestCase):
@@ -40,6 +41,19 @@ class SpongiaTests(unittest.TestCase):
             self.assertEqual(result, 1)
             self.assertTrue(target.exists())
 
+    def test_remove_allows_file_inside_user_profile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "local-updater" / "installer.exe"
+            target.parent.mkdir()
+            target.write_bytes(b"installer")
+            with patch("spongia.Path.home", return_value=root):
+                result = spongia.remove_path(
+                    target, to_trash=False, force=True, lang="en"
+                )
+            self.assertEqual(result, 0)
+            self.assertFalse(target.exists())
+
     def test_remove_directory_requires_recursive(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / "folder"
@@ -71,6 +85,10 @@ class SpongiaTests(unittest.TestCase):
     def test_parse_size_rejects_unknown_unit(self):
         with self.assertRaises(ValueError):
             spongia.parse_size("10XB")
+
+    def test_parse_menu_size_defaults_to_megabytes(self):
+        self.assertEqual(parse_menu_size("500"), 500 * 1024**2)
+        self.assertEqual(parse_menu_size("500KB"), 500 * 1024)
 
     def test_parse_selection_validates_and_deduplicates(self):
         self.assertEqual(spongia.parse_selection("1, 2,1", 3), [1, 2])
