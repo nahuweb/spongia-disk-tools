@@ -3,6 +3,8 @@
 import importlib.util
 import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 from spongia_common import (  # pyright: ignore[reportMissingImports]
@@ -13,29 +15,45 @@ from spongia_translations import confirm_si, text
 
 
 def interactive_remove(paths, lang="en"):
-    """Ask which displayed paths to send to the trash."""
-    if not paths:
-        return
-    try:
-        answer = input(text(lang, "interactive_question")).strip()
-        if not answer:
+    """Ask which displayed paths to send to the trash, repeatedly."""
+    remaining = list(paths)
+    while remaining:
+        try:
+            answer = input(text(lang, "interactive_question")).strip()
+            if not answer:
+                return
+            selected = parse_selection(answer, len(remaining))
+        except KeyboardInterrupt:
+            print(f"\n{Colores.AMARILLO}{text(lang, 'interrupted')}{Colores.RESET}")
             return
-        selected = parse_selection(answer, len(paths))
-    except (ValueError, EOFError):
-        print(f"{Colores.AMARILLO}{text(lang, 'interactive_invalid')}{Colores.RESET}")
-        return
-    except KeyboardInterrupt:
-        print(f"\n{Colores.AMARILLO}{text(lang, 'interrupted')}{Colores.RESET}")
-        return
+        except (ValueError, EOFError):
+            print(
+                f"{Colores.AMARILLO}{text(lang, 'interactive_invalid')}{Colores.RESET}"
+            )
+            return
 
-    for number in selected:
-        remove_path(
-            paths[number - 1],
-            to_trash=True,
-            force=False,
-            recursive=Path(paths[number - 1]).is_dir(),
-            lang=lang,
-        )
+        for number in sorted(selected, reverse=True):
+            target = remaining[number - 1]
+            result = remove_path(
+                target,
+                to_trash=True,
+                force=False,
+                recursive=Path(target).is_dir(),
+                lang=lang,
+            )
+            if result == 0:
+                remaining.pop(number - 1)
+
+        if remaining:
+            print(f"{Colores.CIAN}{text(lang, 'remaining_results')}{Colores.RESET}")
+            for index, target in enumerate(remaining, start=1):
+                print(f"  {index}. {target}")
+            try:
+                answer = input(text(lang, "remove_more")).strip()
+            except (EOFError, KeyboardInterrupt):
+                return
+            if not confirm_si(answer, lang):
+                return
 
 
 def _puede_borrar_permisos(path: Path) -> bool:
@@ -87,22 +105,46 @@ def _delete_target(target):
         raise
 
 
-def _send_to_trash_or_delete(target, force, lang):
-    """Send target to trash when available, otherwise request permanent deletion."""
+def _ensure_send2trash(lang):
+    """Offer to install send2trash and return whether it is available."""
     if importlib.util.find_spec("send2trash") is not None:
-        from send2trash import send2trash  # pyright: ignore[reportMissingModuleSource]
+        return True
 
-        send2trash(str(target))
-        print(f"{Colores.VERDE}{text(lang, 'trashed', target=target)}{Colores.RESET}")
-        return
+    answer = input(text(lang, "no_send2trash")).strip()
+    if not confirm_si(answer, lang):
+        print(f"{Colores.AMARILLO}{text(lang, 'cancelled')}{Colores.RESET}")
+        return False
 
-    print(f"{Colores.AMARILLO}{text(lang, 'no_send2trash')}{Colores.RESET}")
-    if not force:
-        answer = input(text(lang, "confirm_permanent")).strip()
-        if not confirm_si(answer, lang):
-            return
-    _delete_target(target)
-    print(f"{Colores.VERDE}{text(lang, 'deleted_perm', target=target)}{Colores.RESET}")
+    print(f"{Colores.CIAN}{text(lang, 'installing_send2trash')}{Colores.RESET}")
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "send2trash"],
+            check=False,
+        )
+    except OSError as error:
+        print(
+            f"{Colores.ROJO}{text(lang, 'send2trash_install_failed', error=error)}{Colores.RESET}"
+        )
+        return False
+
+    if result.returncode != 0 or importlib.util.find_spec("send2trash") is None:
+        print(
+            f"{Colores.ROJO}{text(lang, 'send2trash_install_failed', error='pip returned an error')}{Colores.RESET}"
+        )
+        return False
+    return True
+
+
+def _send_to_trash(target, lang):
+    """Send target to trash after ensuring trash support is available."""
+    if not _ensure_send2trash(lang):
+        return 1
+
+    from send2trash import send2trash  # pyright: ignore[reportMissingModuleSource]
+
+    send2trash(str(target))
+    print(f"{Colores.VERDE}{text(lang, 'trashed', target=target)}{Colores.RESET}")
+    return 0
 
 
 def remove_path(
@@ -150,7 +192,7 @@ def remove_path(
 
     try:
         if to_trash:
-            _send_to_trash_or_delete(target, force, lang)
+            return _send_to_trash(target, lang)
         else:
             _delete_target(target)
             print(

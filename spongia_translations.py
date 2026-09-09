@@ -120,6 +120,16 @@ MESSAGES = {
         "en": "Numbers to send to the trash (e.g. 1,3; Enter cancels): ",
         "pt": "Números para enviar à lixeira (ex.: 1,3; Enter cancela): ",
     },
+    "remove_more": {
+        "es": "¿Querés borrar otro resultado de esta lista? [s/N] ",
+        "en": "Delete another result from this list? [y/N] ",
+        "pt": "Quer apagar outro resultado desta lista? [s/N] ",
+    },
+    "remaining_results": {
+        "es": "Resultados restantes:",
+        "en": "Remaining results:",
+        "pt": "Resultados restantes:",
+    },
     "interactive_invalid": {
         "es": "Selección inválida; no se borró nada.",
         "en": "Invalid selection; nothing was deleted.",
@@ -282,9 +292,19 @@ MESSAGES = {
         "pt": "✅ Enviado para a lixeira: {target}",
     },
     "no_send2trash": {
-        "es": "⚠️  send2trash no instalado. Usando borrado permanente.",
-        "en": "⚠️  send2trash not installed. Using permanent deletion.",
-        "pt": "⚠️  send2trash não instalado. Usando exclusão permanente.",
+        "es": "⚠️  send2trash no está instalado. ¿Querés instalarlo ahora? [s/N] ",
+        "en": "⚠️  send2trash is not installed. Install it now? [y/N] ",
+        "pt": "⚠️  send2trash não está instalado. Quer instalar agora? [s/N] ",
+    },
+    "installing_send2trash": {
+        "es": "Instalando send2trash...",
+        "en": "Installing send2trash...",
+        "pt": "Instalando send2trash...",
+    },
+    "send2trash_install_failed": {
+        "es": "No se pudo instalar send2trash: {error}",
+        "en": "Could not install send2trash: {error}",
+        "pt": "Não foi possível instalar send2trash: {error}",
     },
     "confirm_permanent": {
         "es": "¿Continuar con BORRADO PERMANENTE? [s/N] ",

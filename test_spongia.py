@@ -1,9 +1,11 @@
 import io
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import spongia
 from spongia_common import parse_menu_size  # pyright: ignore[reportMissingImports]
@@ -29,6 +31,47 @@ class SpongiaTests(unittest.TestCase):
             )
             self.assertEqual(result, 0)
             self.assertFalse(target.exists())
+
+    def test_remove_prompts_before_installing_trash_support(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "keep-me.txt"
+            target.write_text("keep", encoding="utf-8")
+            with (
+                patch("spongia_remove.importlib.util.find_spec", return_value=None),
+                patch("builtins.input", return_value="n"),
+            ):
+                result = spongia.remove_path(
+                    target, to_trash=True, force=True, protected_dirs=[], lang="en"
+                )
+            self.assertEqual(result, 1)
+            self.assertTrue(target.exists())
+
+    def test_remove_installs_trash_support_when_confirmed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "send-me.txt"
+            target.write_text("send", encoding="utf-8")
+            send_to_trash = Mock()
+            fake_module = SimpleNamespace(send2trash=send_to_trash)
+            with (
+                patch(
+                    "spongia_remove.importlib.util.find_spec",
+                    side_effect=[None, object()],
+                ),
+                patch("builtins.input", return_value="y"),
+                patch(
+                    "spongia_remove.subprocess.run", return_value=Mock(returncode=0)
+                ) as run,
+                patch.dict(sys.modules, {"send2trash": fake_module}),
+            ):
+                result = spongia.remove_path(
+                    target, to_trash=True, force=True, protected_dirs=[], lang="en"
+                )
+            self.assertEqual(result, 0)
+            run.assert_called_once_with(
+                [sys.executable, "-m", "pip", "install", "send2trash"],
+                check=False,
+            )
+            send_to_trash.assert_called_once_with(str(target))
 
     def test_remove_rejects_protected_descendant(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -143,6 +186,17 @@ class SpongiaTests(unittest.TestCase):
             result = spongia.interactive_menu()
         self.assertEqual(result, 0)
         self.assertIn("Buscar archivos más pesados", output.getvalue())
+
+    def test_interactive_remove_can_continue_with_remaining_results(self):
+        paths = [Path("first.bin"), Path("second.bin")]
+        with (
+            patch("builtins.input", side_effect=["1", "s", "1", ""]),
+            patch("spongia_remove.remove_path", return_value=0) as remove,
+        ):
+            spongia.interactive_remove(paths, lang="es")
+        self.assertEqual(remove.call_count, 2)
+        self.assertEqual(remove.call_args_list[0].args[0], paths[0])
+        self.assertEqual(remove.call_args_list[1].args[0], paths[1])
 
     def test_find_largest_files_applies_exclusions(self):
         with tempfile.TemporaryDirectory() as directory:
